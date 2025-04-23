@@ -1,5 +1,5 @@
 {
-  "name": "@gurglosa/playwright-zephyr-jira-reporter",
+  "name": "axios",
   "version": "1.0.0",
   "description": "A custom Playwright reporter that syncs test results to Zephyr Scale and creates Jira bugs on failures.",
   "main": "dist/index.js",
@@ -21,9 +21,6 @@
   ],
   "author": "Gurami Ivanidze",
   "license": "MIT",
-  "dependencies": {
-    "axios": "^1.8.4"
-  },
   "peerDependencies": {
     "playwright": "^1.52.0"
   },
@@ -35,5 +32,16 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guramiivanidze/playwright-zephyr-jira-reporter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/guramiivanidze/playwright-zephyr-jira-reporter/issues"
+  },
+  "homepage": "https://github.com/guramiivanidze/playwright-zephyr-jira-reporter#readme",
+  "dependencies": {
+    "axios": "^1.8.4"
   }
 }
