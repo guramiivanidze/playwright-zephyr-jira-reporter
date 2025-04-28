@@ -1,2 +1,3 @@
-import { ZephyrJiraReporter } from './Reporter/ZephyrJiraReporter ';
-export default ZephyrJiraReporter;
+// index.ts
+
+import ZephyrJiraReporter from './Reporter/ZephyrJiraReporter';
