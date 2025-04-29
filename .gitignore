@@ -7,6 +7,10 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+# files
+gukson.config.ts
+
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -140,3 +144,6 @@ dist
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+
+

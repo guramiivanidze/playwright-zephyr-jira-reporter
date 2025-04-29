@@ -2,36 +2,20 @@
 import { FullConfig, Suite, Reporter, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
 
 import { TestExecutionStatus, ZephyrServices } from './ZephyrServices';
-import fs from 'fs';
+import { JiraServices } from './JiraServices';
 
-// class ZephyrJiraReporter implements Reporter {
-
-//     onBegin(config: FullConfig, suite: Suite) {
-//         console.log(`Starting the run with ${suite.allTests().length} tests`);
-//     };
-
-//     onTestBegin(test: TestCase, result: TestResult) {
-//         console.log(`Starting test ${test.title}`);
-//     };
-
-//     onTestEnd(test: TestCase, result: TestResult) {
-//         console.log(`Finished test ${test.title} with status: ${result.status}`);
-//     };
-
-//     onEnd(result: FullResult) {
-//         console.log(`Finished the run: ${result.status}`);
-//     };
-
-// }
-
-
-interface ZephyrScaleReporterConfig {
+interface MainReporterConfig {
     Zephyr_Base_URL: string,
     Zephyr_Access_Token: string,
     Zephyr_Test_Cycle_ID: string,
-    // Zephyr_Test_Plan_ID: 'Put your test plan ID here',
     Zephyr_Test_Project_Key: string,
     Zephyr_Enabled: boolean,
+
+    Jira_Base_URL: string,
+    Jira_Access_Token: string,
+    Jira_Email: string,
+    Jira_project_Key: string,
+    Jira_Enabled: boolean,
 }
 
 function extractKeys(title: string): { testCaseKey: string | null; testCycleKey: string | null } {
@@ -43,7 +27,6 @@ function extractKeys(title: string): { testCaseKey: string | null; testCycleKey:
         testCycleKey: testCycleMatch ? testCycleMatch[1] : null
     };
 }
-
 
 function mapTestStatus(status: TestResult['status']): TestExecutionStatus {
     switch (status) {
@@ -64,7 +47,8 @@ function mapTestStatus(status: TestResult['status']): TestExecutionStatus {
 
 class ZephyrJiraReporter implements Reporter {
     private zephyrService: ZephyrServices | null = null; // Service for interacting with Zephyr Scale
-    private config: ZephyrScaleReporterConfig; // Configuration for the reporter
+    private jiraService: JiraServices | null = null; // Service for interacting with Jira
+    private config: MainReporterConfig; // Configuration for the reporter
     private testResults: Map<string, {
         status: TestExecutionStatus;
         error?: string;
@@ -73,7 +57,7 @@ class ZephyrJiraReporter implements Reporter {
         duration: any;
     }> = new Map();
 
-    constructor(config: ZephyrScaleReporterConfig) {
+    constructor(config: MainReporterConfig) {
         // Initialize configuration with environment variables as fallback
         this.config = {
             Zephyr_Base_URL: process.env.ZEPHYR_BASE_URL || config.Zephyr_Base_URL,
@@ -82,6 +66,13 @@ class ZephyrJiraReporter implements Reporter {
             // Zephyr_Test_Plan_ID: process.env.ZEPHYR_TEST_PLAN_ID || config.Zephyr_Test_Plan_ID,
             Zephyr_Test_Project_Key: process.env.ZEPHYR_TEST_PROJECT_KEY || config.Zephyr_Test_Project_Key,
             Zephyr_Enabled: process.env.ZEPHYR_ENABLED ? JSON.parse(process.env.ZEPHYR_ENABLED) : config.Zephyr_Enabled,
+
+            Jira_Access_Token: config.Jira_Access_Token,
+            Jira_Base_URL: config.Jira_Base_URL,
+            Jira_Email: config.Jira_Email,
+            Jira_project_Key: config.Jira_project_Key,
+            Jira_Enabled: config.Jira_Enabled,
+
         }
 
         if (!this.config.Zephyr_Enabled) {
@@ -110,11 +101,7 @@ class ZephyrJiraReporter implements Reporter {
      */
     onTestEnd(testCase: TestCase, testResult: TestResult): void {
 
-        console.log(testResult.attachments);
-
-
         if (!this.config.Zephyr_Enabled) return;
-
 
         const { testCaseKey, testCycleKey } = extractKeys(testCase.title);
         if (!testCaseKey) {
@@ -146,8 +133,55 @@ class ZephyrJiraReporter implements Reporter {
             testCycleKey: cycleKey,
             testScript,
             duration: testResult.duration,
-  
+
         });
+
+
+
+        if (this.config.Jira_Enabled && testResult.status === 'failed') {
+            const jiraService = new JiraServices({
+                Jira_Base_URL: this.config.Jira_Base_URL,
+                Jira_Access_Token: this.config.Jira_Access_Token,
+                Jira_Email: this.config.Jira_Email,
+                Jira_project_Key: this.config.Jira_project_Key,
+                Jira_Enabled: this.config.Jira_Enabled,
+            });
+
+            let stepNum = 1
+            jiraService.createIssue({
+                fields: {
+                    project: {
+                        key: this.config.Jira_project_Key,
+                    },
+                    summary: `${testCase.title}`,
+                    description: {
+                        type: 'doc',
+                        version: 1,
+                        content: [
+                            {
+                                type: 'paragraph',
+                                content: [
+                                    {
+                                        type: 'text',
+                                        text: `${testScript.map((step: any) => `Step ${stepNum++}: ${step.actualResult} - Status: ${step.statusName}`).join('\n')}`,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    issuetype: {
+                        id: '10002',
+                    },
+                    reporter: {
+                        id: '6113c0ba9798100070110305',
+                    }
+                },
+            }).then((response) => {
+                console.log(`✅Jira issue created: ${response.key}`);
+            }).catch((error) => {
+                console.error('❌Failed to create Jira issue:', error);
+            });
+        }
     }
 
     /**
@@ -222,6 +256,7 @@ class ZephyrJiraReporter implements Reporter {
 
         await Promise.all(updatePromises);
         console.log('Zephyr Scale update completed');
+
     }
 }
 
