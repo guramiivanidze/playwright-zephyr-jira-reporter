@@ -70,10 +70,6 @@ export interface Status {
     id: string;
 }
 
-
-
-
-
 export interface JiraConfig {
     Jira_Base_URL: string;
     Jira_Access_Token: string;
