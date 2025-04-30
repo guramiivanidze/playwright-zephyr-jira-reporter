@@ -2,7 +2,7 @@
 import { FullConfig, Suite, Reporter, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
 
 import { TestExecutionStatus, ZephyrServices } from './ZephyrServices';
-import { JiraServices } from './JiraServices';
+import { JiraServices, IssueStatusTransition } from './JiraServices';
 
 interface MainReporterConfig {
     Zephyr_Base_URL: string,
@@ -50,6 +50,7 @@ class ZephyrJiraReporter implements Reporter {
     private jiraService: JiraServices | null = null; // Service for interacting with Jira
     private config: MainReporterConfig; // Configuration for the reporter
     private testResults: Map<string, {
+        title: string;
         status: TestExecutionStatus;
         error?: string;
         testCycleKey: string;
@@ -67,11 +68,11 @@ class ZephyrJiraReporter implements Reporter {
             Zephyr_Test_Project_Key: process.env.ZEPHYR_TEST_PROJECT_KEY || config.Zephyr_Test_Project_Key,
             Zephyr_Enabled: process.env.ZEPHYR_ENABLED ? JSON.parse(process.env.ZEPHYR_ENABLED) : config.Zephyr_Enabled,
 
-            Jira_Access_Token: config.Jira_Access_Token,
-            Jira_Base_URL: config.Jira_Base_URL,
-            Jira_Email: config.Jira_Email,
-            Jira_project_Key: config.Jira_project_Key,
-            Jira_Enabled: config.Jira_Enabled,
+            Jira_Access_Token: process.env.JIRA_ACCESS_TOKEN || config.Jira_Access_Token,
+            Jira_Base_URL: process.env.JIRA_BASE_URL || config.Jira_Base_URL,
+            Jira_Email: process.env.JIRA_EMAIL || config.Jira_Email,
+            Jira_project_Key: process.env.JIRA_PROJECT_KEY || config.Jira_project_Key,
+            Jira_Enabled: process.env.JIRA_ENABLED ? JSON.parse(process.env.JIRA_ENABLED) : config.Jira_Enabled,
 
         }
 
@@ -89,8 +90,15 @@ class ZephyrJiraReporter implements Reporter {
             Zephyr_Test_Project_Key: this.config.Zephyr_Test_Project_Key,
             Zephyr_Enabled: this.config.Zephyr_Enabled,
         });
-    }
 
+        this.jiraService = new JiraServices({
+            Jira_Base_URL: this.config.Jira_Base_URL,
+            Jira_Access_Token: this.config.Jira_Access_Token,
+            Jira_Email: this.config.Jira_Email,
+            Jira_project_Key: this.config.Jira_project_Key,
+            Jira_Enabled: this.config.Jira_Enabled,
+        });
+    }
 
 
     /**
@@ -128,6 +136,7 @@ class ZephyrJiraReporter implements Reporter {
 
         // Store the test result for later reporting
         this.testResults.set(testCaseKey, {
+            title: testCase.title,
             status,
             error: errorMessage,
             testCycleKey: cycleKey,
@@ -138,50 +147,47 @@ class ZephyrJiraReporter implements Reporter {
 
 
 
-        if (this.config.Jira_Enabled && testResult.status === 'failed') {
-            const jiraService = new JiraServices({
-                Jira_Base_URL: this.config.Jira_Base_URL,
-                Jira_Access_Token: this.config.Jira_Access_Token,
-                Jira_Email: this.config.Jira_Email,
-                Jira_project_Key: this.config.Jira_project_Key,
-                Jira_Enabled: this.config.Jira_Enabled,
-            });
+        // if (this.config.Jira_Enabled && testResult.status === 'failed') {
 
-            let stepNum = 1
-            jiraService.createIssue({
-                fields: {
-                    project: {
-                        key: this.config.Jira_project_Key,
-                    },
-                    summary: `${testCase.title}`,
-                    description: {
-                        type: 'doc',
-                        version: 1,
-                        content: [
-                            {
-                                type: 'paragraph',
-                                content: [
-                                    {
-                                        type: 'text',
-                                        text: `${testScript.map((step: any) => `Step ${stepNum++}: ${step.actualResult} - Status: ${step.statusName}`).join('\n')}`,
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                    issuetype: {
-                        id: '10002',
-                    },
-                    reporter: {
-                        id: '6113c0ba9798100070110305',
-                    }
-                },
-            }).then((response) => {
-                console.log(`✅Jira issue created: ${response.key}`);
-            }).catch((error) => {
-                console.error('❌Failed to create Jira issue:', error);
-            });
-        }
+        //     let stepNum = 1
+        //     this.jiraService?.createIssue({
+        //         fields: {
+        //             project: {
+        //                 key: this.config.Jira_project_Key,
+        //             },
+        //             summary: `${testCase.title}`,
+        //             description: {
+        //                 type: 'doc',
+        //                 version: 1,
+        //                 content: [
+        //                     {
+        //                         type: 'paragraph',
+        //                         content: [
+        //                             {
+        //                                 type: 'text',
+        //                                 text: `${testScript.map((step: any) => `Step ${stepNum++}: ${step.actualResult} - Status: ${step.statusName}`).join('\n')}`,
+        //                             },
+        //                         ],
+        //                     },
+        //                 ],
+        //             },
+        //             issuetype: {
+        //                 id: '10002',
+        //             },
+        //             reporter: {
+        //                 id: '6113c0ba9798100070110305',
+        //             }
+        //         },
+        //     }).then((response) => {
+        //         console.log(`✅Jira issue created: ${response.key}`);
+        //     }).catch((error) => {
+        //         console.error('❌Failed to create Jira issue:', error);
+        //     });
+
+
+        // }
+
+
     }
 
     /**
@@ -245,6 +251,80 @@ class ZephyrJiraReporter implements Reporter {
 
                     });
                 }
+
+                if (this.config.Jira_Enabled && this.jiraService) {
+
+                    if (result.status === TestExecutionStatus.failed) {
+
+                        try {
+                            const searchResult = await this.jiraService.searchIssueWithTitleUsingJQL(`${testCaseKey}`);
+                            // Assuming the first issue is the one we want
+                            // const jiraIssueStatus = await this.jiraService.getJiraIssue(existingIssue.key);
+                            if (searchResult.sections[0].issues.length > 0) {
+                                const existingIssue = searchResult.sections[0].issues[0];
+                                console.log(`⚠️ Jira issue already exists for ${testCaseKey}: ${existingIssue.key}`);
+                                // Transition it to "In Progress"
+
+                                // Fetch full issue details to inspect current status
+                                const jiraIssueStatus = await this.jiraService.getJiraIssue(existingIssue.key);
+
+                                const currentStatus = jiraIssueStatus.fields.status.name;
+                                console.log(`📌 Current Jira issue status: ${currentStatus}`);
+
+                                if (['Ready For Testing', 'testing'].includes(currentStatus)) {
+                                    await this.jiraService.transitionIssue(existingIssue.key, '31');
+                                    console.log(`✅ Transitioned ${existingIssue.key} to In Progress`);
+                                } else {
+                                    console.log(`🔄 Skipping transition — already in "${currentStatus}"`);
+
+                                }
+                                // await this.jiraService.transitionIssue(existingIssue.key, IssueStatusTransition.in_progress);
+                            } else {
+                                let stepNum = 1;
+                                const newIssue = await this.jiraService.createIssue({
+                                    fields: {
+                                        project: {
+                                            key: this.config.Jira_project_Key,
+                                        },
+                                        summary: `${result.title}`,
+                                        customfield_10069: `${testCaseKey}`,
+                                        description: {
+                                            type: 'doc',
+                                            version: 1,
+                                            content: [
+                                                {
+                                                    type: 'paragraph',
+                                                    content: [
+                                                        {
+                                                            type: 'text',
+                                                            text: `Faild: ${result.title}
+                                                                ${result.testScript?.map((step: any) =>
+                                                                `Step ${stepNum++}: ${step.actualResult} - Status: ${step.statusName}`
+                                                            ).join('\n')}`,
+                                                        },
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                        issuetype: {
+                                            id: '10002',
+                                        },
+                                        reporter: {
+                                            id: '6113c0ba9798100070110305',
+                                        }
+                                    },
+                                });
+
+                                console.log(`✅ Jira issue created: ${newIssue.key}`);
+                            }
+
+                        } catch (error) {
+                            console.error(`❌ Jira issue handling failed for test ${testCaseKey}`, error);
+                        }
+                    }
+
+                }
+
             } catch (error) {
                 if (error instanceof Error) {
                     console.log(`Failed to update test case ${testCaseKey} in Zephyr Scale:`, error.message);
@@ -256,7 +336,6 @@ class ZephyrJiraReporter implements Reporter {
 
         await Promise.all(updatePromises);
         console.log('Zephyr Scale update completed');
-
     }
 }
 
