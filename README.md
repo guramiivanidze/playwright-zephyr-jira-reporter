@@ -32,7 +32,7 @@ yarn add -D @gurglosa/playwright-zephyr-jira-reporter
 ```
 export default defineConfig({
   reporter: [
-    ['./Reporter/ZephyrJiraReporter.ts', {
+    ['@gurglosa/playwright-zephyr-jira-reporter/dist/Reporter/ZephyrJiraReporter', {
       Zephyr_Base_URL: 'https://api.zephyrscale.example.com/v2',
       Zephyr_Access_Token: 'yourtoken',
       Zephyr_Test_Cycle_ID: 'TEST-CYCLE-123',
@@ -42,7 +42,7 @@ export default defineConfig({
       Jira_Base_URL: 'https://example.atlassian.net',
       Jira_Access_Token: 'EXAMPLE123',
       Jira_Email: 'user@example.com',
-      Jira_project_Key: 'TEST',
+      Jira_project_Key: 'TEST',npx
       Jira_Enabled: true,
 
     }],
