@@ -93,4 +93,4 @@ Have an idea or improvement? Feel free to open an issue or PR!
 
 ---
 ## 📫 Contact
-Maintained by @gurglosa – feel free to reach out with questions or feedback.
+Maintained by [@gurglosa](https://github.com/guramiivanidze) – feel free to reach out with questions or feedback.
