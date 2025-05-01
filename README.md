@@ -17,17 +17,20 @@ A custom [Playwright](https://playwright.dev/) test reporter that integrates sea
 
 ## 📦 Installation
 
-```bash
+
+```
+bash
 npm install -D @gurglosa/playwright-zephyr-jira-reporter
 
 Or with Yarn:
 yarn add -D @gurglosa/playwright-zephyr-jira-reporter
 
+```
 
+---
 ## ⚙️ Configuration
 
-import { defineConfig } from '@playwright/test';
-
+```
 export default defineConfig({
   reporter: [
     ['./Reporter/ZephyrJiraReporter.ts', {
@@ -46,20 +49,22 @@ export default defineConfig({
     }],
   ],
 });
-
+```
+---
 
 ## 🧪 Test Case Linking
-
+``` 
 To link a test with a Zephyr Scale test case or Jira issue, use a tag in the test title or annotations:
 test('[GLS-T108] should navigate to the Playwright homepage', async ({ page }) => {
     await page.goto('https://playwright.dev/');
     await expect(page).toHaveTitle(/Playwrightr/);
 });
+```
 
-
+---
 
 ## 📄 Environment Variables (Optional)
-
+```
 To avoid hardcoding credentials, use environment variables:
 
 ZEPHYR_JIRA_BASE_URL=https://your-domain.atlassian.net
@@ -71,22 +76,22 @@ You can then reference these in your playwright.config.ts:
 jiraBaseUrl: process.env.ZEPHYR_JIRA_BASE_URL,
 jiraUser: process.env.ZEPHYR_JIRA_USER,
 jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
-
-
-
+```
+---
 ## ✅ Best Practices
+```
 Use consistent test case IDs ([ZEPHYR-T123]) across your tests.
 
 Create dedicated test cycles for each run or CI pipeline.
 
 Use Jira workflows that align with your team's status mapping.
-
+```
+---
 ## 🧩 Contributing
+```
 Have an idea or improvement? Feel free to open an issue or PR!
+```
 
-
-## 📄 License
-MIT
 
 ## 📫 Contact
 Maintained by @gurglosa – feel free to reach out with questions or feedback.
