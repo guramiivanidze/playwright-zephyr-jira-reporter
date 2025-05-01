@@ -98,6 +98,21 @@ jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
 - Use Jira workflows that align with your team's status mapping.
 
 ---
+## ⚠️ Warnings ⚠️
+
+- All tests that need to be run must be grouped into one specific cycle.
+- Ensure your **Zephyr Scale** and **Jira** credentials are stored securely. Avoid committing sensitive information to version control.
+- Misconfigured environment variables or reporter settings may result in failed test result uploads or incorrect data mapping.
+- Be cautious when modifying `IssueStatusTransition` values in `JiraService.ts`, as incorrect mappings can disrupt Jira workflows.
+- Always validate your test case IDs and ensure they exist in **Zephyr Scale** or **Jira** before running tests.
+- Using outdated versions of the reporter may lead to compatibility issues with Playwright or API changes in **Zephyr Scale**/**Jira**.
+- Excessive API calls to **Zephyr Scale** or **Jira** may lead to rate-limiting or account suspension. Use the reporter responsibly.
+- Test execution data is irreversible once uploaded. Double-check configurations before running in production environments.
+- Ensure your Playwright version is compatible with the reporter to avoid unexpected behavior.
+- Avoid hardcoding sensitive data directly in your configuration files; use environment variables instead.
+- Regularly review and update your API tokens to maintain security and access compliance.
+
+---
 ## 🧩 Contributing
 ```
 Have an idea or improvement? Feel free to open an issue or PR!
@@ -106,3 +121,7 @@ Have an idea or improvement? Feel free to open an issue or PR!
 ---
 ## 📫 Contact
 Maintained by [@gurglosa](https://github.com/guramiivanidze) – feel free to reach out with questions or feedback.
+
+
+--- 
+
