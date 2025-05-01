@@ -1,5 +1,5 @@
 {
-  "name": "axios",
+  "name": "@gurglosa/playwright-zephyr-jira-reporter",
   "version": "1.0.0",
   "description": "A custom Playwright reporter that syncs test results to Zephyr Scale and creates Jira bugs on failures.",
   "main": "dist/index.js",
