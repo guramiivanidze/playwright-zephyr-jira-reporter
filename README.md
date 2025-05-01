@@ -49,6 +49,18 @@ export default defineConfig({
   ],
 });
 ```
+>You Have to set Your Jira Status ID in JiraService.ts
+```
+export enum IssueStatusTransition {
+    to_do = '11',
+    in_progress = '21',
+    done = '31',
+    ready_for_testing = '3',
+    testing = '2'
+}
+```
+
+
 ---
 
 ## 🧪 Test Case Linking
