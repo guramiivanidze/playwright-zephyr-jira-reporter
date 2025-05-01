@@ -155,6 +155,7 @@ class ZephyrJiraReporter implements Reporter {
             const searchResult = await this.jiraService.searchIssueWithTitleUsingJQL(`${testCaseKey}`);
             const existingIssues = searchResult.sections[0]?.issues || [];
 
+
             if (existingIssues.length === 1) {
                 const issue = existingIssues[0];
                 console.log(`⚠️ Jira issue already exists for ${testCaseKey}: ${issue.key}`);
@@ -170,12 +171,14 @@ class ZephyrJiraReporter implements Reporter {
 
                 const status = result.status as TestExecutionStatus;
                 const transition = transitionMap[status];
-                if (transition) {
+
+                if (currentStatus === "Done" || !transition) {
+                    console.log(`🔄 No transition needed for "${currentStatus}"`);
+                } else {
                     await this.jiraService.transitionIssue(issue.key, transition);
                     console.log(`✅ Transitioned ${issue.key} to ${this.getTransitionName(transition)}`);
-                } else {
-                    console.log(`🔄 No transition needed for "${currentStatus}"`);
                 }
+
             } else if (result.status === TestExecutionStatus.failed && existingIssues.length === 0) {
                 await this.createNewJiraIssue(testCaseKey, result);
             } else if (existingIssues.length > 1) {
