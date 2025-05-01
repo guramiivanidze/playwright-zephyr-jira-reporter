@@ -1,6 +1,6 @@
 {
   "name": "@gurglosa/playwright-zephyr-jira-reporter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A custom Playwright reporter that syncs test results to Zephyr Scale and creates Jira bugs on failures.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
