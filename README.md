@@ -8,25 +8,62 @@ A custom [Playwright](https://playwright.dev/) test reporter that integrates sea
 
 ## ✨ Features
 
-- 📤 Report test results from Playwright to **Zephyr Scale**
-- 🔗 Automatically link test cases to test executions in **Jira**
-- 📘 Add comments, status updates, and metadata to Jira issues
-- 🔄 Configurable reporter to fit your test lifecycle and project needs
+### ✅ Automatic Zephyr Test Case Update
+>
+>Each Playwright test must include the corresponding Zephyr Test Case Key in its title (e.g., CYP-T123: should login with valid credentials). After execution:
+
+- The test result is reported to Zephyr.
+
+- Each individual test step status is updated based on the execution outcome, making it easier to identify which step failed.
+
+### 🐞 Automatic Bug Creation in Jira
+>
+> If a test fails:
+
+- A bug is automatically created in Jira.
+
+The issue contains:
+
+- A custom field with the Zephyr Test Case Key
+
+- A detailed description including:
+The failed steps
+The exact error message encountered during test execution
+
+### 🔁 Jira Issue Status Management
+
+- If a related Jira issue is already in "Testing", and the test is re-run:
+The issue is moved to "In Progress".
+
+- If the test passes successfully:
+The issue status is transitioned to "Done".
+
+### 📋 Step Synchronization
+
+Zephyr Test Cases must have exactly the same steps as defined in the Playwright test. This ensures step-by-step result tracking and consistency.
+
+### 🧩 Custom Field Requirement in Jira
+
+Jira must have a custom field configured to store the Zephyr Test Case Key for proper linkage between test results and issues.
 
 ---
 
 ## 📦 Installation
 
 > bash
+
 ```
 npm install -D @gurglosa/playwright-zephyr-jira-reporter
 ```
+
 > Or with Yarn:
+
 ```
 yarn add -D @gurglosa/playwright-zephyr-jira-reporter
 ```
 
 ---
+
 ## ⚙️ Configuration
 
 ```
@@ -49,7 +86,9 @@ export default defineConfig({
   ],
 });
 ```
+
 >You Have to set Your Jira Status ID in JiraService.ts
+
 ```
 export enum IssueStatusTransition {
     to_do = '11',
@@ -60,12 +99,12 @@ export enum IssueStatusTransition {
 }
 ```
 
-
 ---
 
 ## 🧪 Test Case Linking
 
 > To link a test with a Zephyr Scale test case or Jira issue, use a tag in the test title or annotations:
+
 ```
 test('[GLS-T108] should navigate to the Playwright homepage', async ({ page }) => {
     await page.goto('https://playwright.dev/');
@@ -78,6 +117,7 @@ test('[GLS-T108] should navigate to the Playwright homepage', async ({ page }) =
 ## 📄 Environment Variables (Optional)
 
 > To avoid hardcoding credentials, use environment variables:
+
 ```
 ZEPHYR_JIRA_BASE_URL=https://your-domain.atlassian.net
 ZEPHYR_JIRA_USER=your-email@example.com
@@ -85,12 +125,15 @@ ZEPHYR_JIRA_TOKEN=your-api-token
 ```
 
 > You can then reference these in your playwright.config.ts:
+
 ```
 jiraBaseUrl: process.env.ZEPHYR_JIRA_BASE_URL,
 jiraUser: process.env.ZEPHYR_JIRA_USER,
 jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
 ```
+
 ---
+
 ## ✅ Best Practices
 
 - Use consistent test case IDs ([ZEPHYR-T123]) across your tests.
@@ -98,6 +141,7 @@ jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
 - Use Jira workflows that align with your team's status mapping.
 
 ---
+
 ## ⚠️ Warnings ⚠️
 
 - All tests that need to be run must be grouped into one specific cycle.
@@ -113,15 +157,17 @@ jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
 - Regularly review and update your API tokens to maintain security and access compliance.
 
 ---
+
 ## 🧩 Contributing
+
 ```
 Have an idea or improvement? Feel free to open an issue or PR!
 ```
 
 ---
+
 ## 📫 Contact
+
 Maintained by [@gurglosa](https://github.com/guramiivanidze) – feel free to reach out with questions or feedback.
 
-
---- 
-
+---
