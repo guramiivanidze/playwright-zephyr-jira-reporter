@@ -9,7 +9,7 @@ A custom [Playwright](https://playwright.dev/) test reporter that integrates sea
 ## ✨ Features
 
 ### ✅ Automatic Zephyr Test Case Update
->
+
 >Each Playwright test must include the corresponding Zephyr Test Case Key in its title (e.g., CYP-T123: should login with valid credentials). After execution:
 
 - The test result is reported to Zephyr.
@@ -22,13 +22,13 @@ A custom [Playwright](https://playwright.dev/) test reporter that integrates sea
 
 - A bug is automatically created in Jira.
 
-The issue contains:
+> The issue contains:
 
 - A custom field with the Zephyr Test Case Key
 
 - A detailed description including:
-The failed steps
-The exact error message encountered during test execution
+  The failed steps
+  The exact error message encountered during test execution
 
 ### 🔁 Jira Issue Status Management
 
