@@ -24,7 +24,7 @@ Or with Yarn:
 yarn add -D @gurglosa/playwright-zephyr-jira-reporter
 
 
-⚙️ Configuration
+## ⚙️ Configuration
 
 import { defineConfig } from '@playwright/test';
 
@@ -48,7 +48,7 @@ export default defineConfig({
 });
 
 
-🧪 Test Case Linking
+## 🧪 Test Case Linking
 
 To link a test with a Zephyr Scale test case or Jira issue, use a tag in the test title or annotations:
 test('[GLS-T108] should navigate to the Playwright homepage', async ({ page }) => {
@@ -58,7 +58,7 @@ test('[GLS-T108] should navigate to the Playwright homepage', async ({ page }) =
 
 
 
-📄 Environment Variables (Optional)
+## 📄 Environment Variables (Optional)
 
 To avoid hardcoding credentials, use environment variables:
 
@@ -74,19 +74,19 @@ jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
 
 
 
-✅ Best Practices
+## ✅ Best Practices
 Use consistent test case IDs ([ZEPHYR-T123]) across your tests.
 
 Create dedicated test cycles for each run or CI pipeline.
 
 Use Jira workflows that align with your team's status mapping.
 
-🧩 Contributing
+## 🧩 Contributing
 Have an idea or improvement? Feel free to open an issue or PR!
 
 
-📄 License
+## 📄 License
 MIT
 
-📫 Contact
+## 📫 Contact
 Maintained by @gurglosa – feel free to reach out with questions or feedback.
