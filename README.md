@@ -81,11 +81,9 @@ jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
 ---
 ## ✅ Best Practices
 ```
-Use consistent test case IDs ([ZEPHYR-T123]) across your tests.
-
-Create dedicated test cycles for each run or CI pipeline.
-
-Use Jira workflows that align with your team's status mapping.
+- Use consistent test case IDs ([ZEPHYR-T123]) across your tests.
+- Create dedicated test cycles for each run or CI pipeline.
+- Use Jira workflows that align with your team's status mapping.
 ```
 ---
 ## 🧩 Contributing
