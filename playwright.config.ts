@@ -4,9 +4,6 @@ import { defineConfig, devices } from '@playwright/test';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -29,13 +26,11 @@ export default defineConfig({
       Zephyr_Base_URL: 'https://api.zephyrscale.example.com/v2',
       Zephyr_Access_Token: '..abcdefghijklmnopqrstuvwxyz1234567890',
       Zephyr_Test_Cycle_ID: 'TEST-CYCLE-123',
-      // Zephyr_Test_Plan_ID: 'Put your test plan ID here',
       Zephyr_Test_Project_Key: 'TEST',
       Zephyr_Enabled: true,
 
       Jira_Base_URL: 'https://example.atlassian.net',
       Jira_Access_Token: 'ATATT3xFfGF0aBZay--=EXAMPLE123',
-      // Jira_Organization_Id : '12345678-1234-1234-1234-123456789012',
       Jira_Email: 'user@example.com',
       Jira_project_Key: 'TEST',
       Jira_Enabled: true,
@@ -58,41 +53,6 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });
