@@ -17,14 +17,13 @@ A custom [Playwright](https://playwright.dev/) test reporter that integrates sea
 
 ## 📦 Installation
 
-
+> bash
 ```
-bash
 npm install -D @gurglosa/playwright-zephyr-jira-reporter
-
-Or with Yarn:
+```
+> Or with Yarn:
+```
 yarn add -D @gurglosa/playwright-zephyr-jira-reporter
-
 ```
 
 ---
@@ -65,32 +64,33 @@ test('[GLS-T108] should navigate to the Playwright homepage', async ({ page }) =
 ---
 
 ## 📄 Environment Variables (Optional)
-```
-To avoid hardcoding credentials, use environment variables:
 
+> To avoid hardcoding credentials, use environment variables:
+```
 ZEPHYR_JIRA_BASE_URL=https://your-domain.atlassian.net
 ZEPHYR_JIRA_USER=your-email@example.com
 ZEPHYR_JIRA_TOKEN=your-api-token
+```
 
-You can then reference these in your playwright.config.ts:
-
+> You can then reference these in your playwright.config.ts:
+```
 jiraBaseUrl: process.env.ZEPHYR_JIRA_BASE_URL,
 jiraUser: process.env.ZEPHYR_JIRA_USER,
 jiraToken: process.env.ZEPHYR_JIRA_TOKEN,
 ```
 ---
 ## ✅ Best Practices
-```
+
 - Use consistent test case IDs ([ZEPHYR-T123]) across your tests.
 - Create dedicated test cycles for each run or CI pipeline.
 - Use Jira workflows that align with your team's status mapping.
-```
+
 ---
 ## 🧩 Contributing
 ```
 Have an idea or improvement? Feel free to open an issue or PR!
 ```
 
-
+---
 ## 📫 Contact
 Maintained by @gurglosa – feel free to reach out with questions or feedback.
