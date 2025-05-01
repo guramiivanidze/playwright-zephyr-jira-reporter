@@ -1,6 +1,5 @@
 // src/ZephyrJiraReporter.ts
 import { FullConfig, Suite, Reporter, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
-
 import { TestExecutionStatus, ZephyrServices } from './ZephyrServices';
 import { JiraServices, IssueStatusTransition } from './JiraServices';
 
@@ -16,33 +15,6 @@ interface MainReporterConfig {
     Jira_Email: string,
     Jira_project_Key: string,
     Jira_Enabled: boolean,
-}
-
-function extractKeys(title: string): { testCaseKey: string | null; testCycleKey: string | null } {
-    const testCaseMatch = title.match(/\[([A-Z]+-T\d+)\]/); // Matches test case keys like [MYA-T123]
-    const testCycleMatch = title.match(/\[([A-Z]+-R\d+)\]/); // Matches test cycle keys like [MYA-R9]
-
-    return {
-        testCaseKey: testCaseMatch ? testCaseMatch[1] : null,
-        testCycleKey: testCycleMatch ? testCycleMatch[1] : null
-    };
-}
-
-function mapTestStatus(status: TestResult['status']): TestExecutionStatus {
-    switch (status) {
-        case 'passed':
-            return TestExecutionStatus.passed;
-        case 'failed':
-            return TestExecutionStatus.failed;
-        case 'skipped':
-            return TestExecutionStatus.skipped;
-        case 'timedOut':
-            return TestExecutionStatus.timedOut;
-        case 'interrupted':
-            return TestExecutionStatus.interrupted;
-        default:
-            return TestExecutionStatus.UNKNOWN;
-    }
 }
 
 class ZephyrJiraReporter implements Reporter {
@@ -76,11 +48,10 @@ class ZephyrJiraReporter implements Reporter {
 
         }
 
-        if (!this.config.Zephyr_Enabled) {
+        if (!this.config.Zephyr_Enabled || !this.config.Jira_Enabled) {
             console.log('Zephyr Scale reporting is disabled');
             return;
         }
-
         // Initialize the Zephyr Scale service if reporting is enabled
         this.zephyrService = new ZephyrServices({
             Zephyr_Base_URL: this.config.Zephyr_Base_URL,
@@ -100,18 +71,11 @@ class ZephyrJiraReporter implements Reporter {
         });
     }
 
-
-    /**
-     * Called when a test ends. Collects test results and prepares them for reporting.
-     * 
-     * @param testCase - The test case
-     * @param testResult - The test result
-     */
     onTestEnd(testCase: TestCase, testResult: TestResult): void {
 
-        if (!this.config.Zephyr_Enabled) return;
+        if (!this.config.Zephyr_Enabled || !this.config.Jira_Enabled) return;
 
-        const { testCaseKey, testCycleKey } = extractKeys(testCase.title);
+        const { testCaseKey, testCycleKey } = this.extractKeys(testCase.title);
         if (!testCaseKey) {
             console.log(`No Jira test case key found in test title: ${testCase.title}`);
             return;
@@ -124,7 +88,7 @@ class ZephyrJiraReporter implements Reporter {
             return;
         }
 
-        const status = mapTestStatus(testResult.status);
+        const status = this.mapTestStatus(testResult.status);
         let errorMessage = '';
 
         if (testResult.error) {
@@ -142,93 +106,9 @@ class ZephyrJiraReporter implements Reporter {
             testCycleKey: cycleKey,
             testScript,
             duration: testResult.duration,
-
         });
-
-
-
-        // if (this.config.Jira_Enabled && testResult.status === 'failed') {
-
-        //     let stepNum = 1
-        //     this.jiraService?.createIssue({
-        //         fields: {
-        //             project: {
-        //                 key: this.config.Jira_project_Key,
-        //             },
-        //             summary: `${testCase.title}`,
-        //             description: {
-        //                 type: 'doc',
-        //                 version: 1,
-        //                 content: [
-        //                     {
-        //                         type: 'paragraph',
-        //                         content: [
-        //                             {
-        //                                 type: 'text',
-        //                                 text: `${testScript.map((step: any) => `Step ${stepNum++}: ${step.actualResult} - Status: ${step.statusName}`).join('\n')}`,
-        //                             },
-        //                         ],
-        //                     },
-        //                 ],
-        //             },
-        //             issuetype: {
-        //                 id: '10002',
-        //             },
-        //             reporter: {
-        //                 id: '6113c0ba9798100070110305',
-        //             }
-        //         },
-        //     }).then((response) => {
-        //         console.log(`✅Jira issue created: ${response.key}`);
-        //     }).catch((error) => {
-        //         console.error('❌Failed to create Jira issue:', error);
-        //     });
-
-
-        // }
-
-
     }
 
-    /**
-     * Removes ANSI color codes from a string.
-     * 
-     * @param str - The string to clean
-     * @returns The cleaned string
-     */
-    private stripAnsiCodes(str: string): string {
-        return str.replace(/\x1B\[\d+m/g, ''); // Removes ANSI color codes
-    }
-
-    /**
-     * Extracts test script details from the test result and enhances it with test execution status.
-     * 
-     * @param result - The test result
-     * @returns The test script as an object (not a string)
-     */
-    private extractTestScript(result: TestResult): any {
-        try {
-            // Filter out steps categorized as 'hook' (e.g., setup/teardown steps)
-            const filteredSteps = result.steps.filter(step => step.category !== 'hook');
-
-            // Map each step to an object containing its execution status and result
-            const stepScriptWithErrors = filteredSteps.map(step => ({
-                actualResult: step.error
-                    ? `Step "${step.title}" failed with error: ${this.stripAnsiCodes(step.error.stack || 'Unknown error')}`
-                    : "Step executed successfully",
-                statusName: step.error ? 'fail' : 'pass'
-            }));
-
-            return stepScriptWithErrors;
-        } catch (error) {
-            console.error('Failed to extract test script:', error);
-            return undefined; // Return undefined if extraction fails
-        }
-    }
-
-    /**
-     * Called when all tests have finished. Reports the collected test results to Zephyr Scale.
-     */
     async onEnd(): Promise<void> {
         if (!this.config.Zephyr_Enabled || !this.zephyrService || this.testResults.size === 0) return;
 
@@ -251,80 +131,9 @@ class ZephyrJiraReporter implements Reporter {
 
                     });
                 }
-
                 if (this.config.Jira_Enabled && this.jiraService) {
-
-                    if (result.status === TestExecutionStatus.failed) {
-
-                        try {
-                            const searchResult = await this.jiraService.searchIssueWithTitleUsingJQL(`${testCaseKey}`);
-                            // Assuming the first issue is the one we want
-                            // const jiraIssueStatus = await this.jiraService.getJiraIssue(existingIssue.key);
-                            if (searchResult.sections[0].issues.length > 0) {
-                                const existingIssue = searchResult.sections[0].issues[0];
-                                console.log(`⚠️ Jira issue already exists for ${testCaseKey}: ${existingIssue.key}`);
-                                // Transition it to "In Progress"
-
-                                // Fetch full issue details to inspect current status
-                                const jiraIssueStatus = await this.jiraService.getJiraIssue(existingIssue.key);
-
-                                const currentStatus = jiraIssueStatus.fields.status.name;
-                                console.log(`📌 Current Jira issue status: ${currentStatus}`);
-
-                                if (['Ready For Testing', 'testing'].includes(currentStatus)) {
-                                    await this.jiraService.transitionIssue(existingIssue.key, '31');
-                                    console.log(`✅ Transitioned ${existingIssue.key} to In Progress`);
-                                } else {
-                                    console.log(`🔄 Skipping transition — already in "${currentStatus}"`);
-
-                                }
-                                // await this.jiraService.transitionIssue(existingIssue.key, IssueStatusTransition.in_progress);
-                            } else {
-                                let stepNum = 1;
-                                const newIssue = await this.jiraService.createIssue({
-                                    fields: {
-                                        project: {
-                                            key: this.config.Jira_project_Key,
-                                        },
-                                        summary: `${result.title}`,
-                                        customfield_10069: `${testCaseKey}`,
-                                        description: {
-                                            type: 'doc',
-                                            version: 1,
-                                            content: [
-                                                {
-                                                    type: 'paragraph',
-                                                    content: [
-                                                        {
-                                                            type: 'text',
-                                                            text: `Faild: ${result.title}
-                                                                ${result.testScript?.map((step: any) =>
-                                                                `Step ${stepNum++}: ${step.actualResult} - Status: ${step.statusName}`
-                                                            ).join('\n')}`,
-                                                        },
-                                                    ],
-                                                },
-                                            ],
-                                        },
-                                        issuetype: {
-                                            id: '10002',
-                                        },
-                                        reporter: {
-                                            id: '6113c0ba9798100070110305',
-                                        }
-                                    },
-                                });
-
-                                console.log(`✅ Jira issue created: ${newIssue.key}`);
-                            }
-
-                        } catch (error) {
-                            console.error(`❌ Jira issue handling failed for test ${testCaseKey}`, error);
-                        }
-                    }
-
+                    await this.handleJiraIssue(testCaseKey, result);
                 }
-
             } catch (error) {
                 if (error instanceof Error) {
                     console.log(`Failed to update test case ${testCaseKey} in Zephyr Scale:`, error.message);
@@ -336,6 +145,124 @@ class ZephyrJiraReporter implements Reporter {
 
         await Promise.all(updatePromises);
         console.log('Zephyr Scale update completed');
+    }
+
+
+    private async handleJiraIssue(testCaseKey: string, result: any) {
+        if (!this.jiraService) return;
+
+        try {
+            const searchResult = await this.jiraService.searchIssueWithTitleUsingJQL(`${testCaseKey}`);
+            const existingIssues = searchResult.sections[0]?.issues || [];
+
+            if (existingIssues.length === 1) {
+                const issue = existingIssues[0];
+                console.log(`⚠️ Jira issue already exists for ${testCaseKey}: ${issue.key}`);
+
+                const currentStatus = (await this.jiraService.getJiraIssue(issue.key)).fields.status.name;
+                console.log(`📌 Current Jira issue status: ${currentStatus}`);
+
+                const transitionMap: Partial<Record<TestExecutionStatus, IssueStatusTransition>> = {
+                    [TestExecutionStatus.failed]: ['Ready For Testing', 'testing'].includes(currentStatus)
+                        ? IssueStatusTransition.in_progress : undefined,
+                    [TestExecutionStatus.passed]: IssueStatusTransition.done
+                };
+
+                const status = result.status as TestExecutionStatus;
+                const transition = transitionMap[status];
+                if (transition) {
+                    await this.jiraService.transitionIssue(issue.key, transition);
+                    console.log(`✅ Transitioned ${issue.key} to ${this.getTransitionName(transition)}`);
+                } else {
+                    console.log(`🔄 No transition needed for "${currentStatus}"`);
+                }
+            } else if (result.status === TestExecutionStatus.failed && existingIssues.length === 0) {
+                await this.createNewJiraIssue(testCaseKey, result);
+            } else if (existingIssues.length > 1) {
+                console.log(`⚠️ Multiple Jira issues found for ${testCaseKey}. Please check manually.`);
+            }
+
+        } catch (error) {
+            console.error(`❌ Jira issue handling failed for test ${testCaseKey}`, error);
+        }
+    };
+
+    private async createNewJiraIssue(testCaseKey: string, result: any) {
+        let stepNum = 1;
+        const descriptionText = `Failed: ${result.title}\n` +
+            result.testScript?.map((step: any) =>
+                `Step ${stepNum++}: ${step.actualResult} - Status: ${step.statusName}`
+            ).join('\n');
+
+        const issue = await this.jiraService!.createIssue({
+            fields: {
+                project: { key: this.config.Jira_project_Key },
+                summary: result.title,
+                customfield_10069: testCaseKey,
+                description: {
+                    type: 'doc',
+                    version: 1,
+                    content: [{ type: 'paragraph', content: [{ type: 'text', text: descriptionText }] }],
+                },
+                issuetype: { id: '10002' },
+                reporter: { id: '6113c0ba9798100070110305' }
+            }
+        });
+
+        console.log(`✅ Jira issue created: ${issue.key}`);
+    };
+
+    private getTransitionName(value: string): string | undefined {
+        return Object.entries(IssueStatusTransition).find(([_, val]) => val === value)?.[0];
+    };
+
+    private extractTestScript(result: TestResult): any {
+        try {
+            // Filter out steps categorized as 'hook' (e.g., setup/teardown steps)
+            const filteredSteps = result.steps.filter(step => step.category !== 'hook');
+            // Map each step to an object containing its execution status and result
+            const stepScriptWithErrors = filteredSteps.map(step => ({
+                actualResult: step.error
+                    ? `Step "${step.title}" failed with error: ${this.stripAnsiCodes(step.error.stack || 'Unknown error')}`
+                    : "Step executed successfully",
+                statusName: step.error ? 'fail' : 'pass'
+            }));
+            return stepScriptWithErrors;
+        } catch (error) {
+            console.error('Failed to extract test script:', error);
+            return undefined; // Return undefined if extraction fails
+        }
+    }
+
+    private stripAnsiCodes(str: string): string {
+        return str.replace(/\x1B\[\d+m/g, ''); // Removes ANSI color codes
+    }
+
+    private extractKeys(title: string): { testCaseKey: string | null; testCycleKey: string | null } {
+        const testCaseMatch = title.match(/\[([A-Z]+-T\d+)\]/); // Matches test case keys like [MYA-T123]
+        const testCycleMatch = title.match(/\[([A-Z]+-R\d+)\]/); // Matches test cycle keys like [MYA-R9]
+
+        return {
+            testCaseKey: testCaseMatch ? testCaseMatch[1] : null,
+            testCycleKey: testCycleMatch ? testCycleMatch[1] : null
+        };
+    }
+
+    private mapTestStatus(status: TestResult['status']): TestExecutionStatus {
+        switch (status) {
+            case 'passed':
+                return TestExecutionStatus.passed;
+            case 'failed':
+                return TestExecutionStatus.failed;
+            case 'skipped':
+                return TestExecutionStatus.skipped;
+            case 'timedOut':
+                return TestExecutionStatus.timedOut;
+            case 'interrupted':
+                return TestExecutionStatus.interrupted;
+            default:
+                return TestExecutionStatus.UNKNOWN;
+        }
     }
 }
 

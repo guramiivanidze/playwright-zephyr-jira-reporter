@@ -97,10 +97,6 @@ export enum IssueStatusTransition {
     done = '31',
     ready_for_testing = '3',
     testing = '2'
-    // BLOCKED = 'Blocked',
-    // UNEXECUTED = 'Unexecuted',
-    // NOT_APPLICABLE = 'Not Applicable',
-
 }
 export interface JiraIssueResponse {
     id: string;
