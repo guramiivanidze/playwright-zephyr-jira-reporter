@@ -53,8 +53,9 @@ export default defineConfig({
 ---
 
 ## 🧪 Test Case Linking
-``` 
-To link a test with a Zephyr Scale test case or Jira issue, use a tag in the test title or annotations:
+
+> To link a test with a Zephyr Scale test case or Jira issue, use a tag in the test title or annotations:
+```
 test('[GLS-T108] should navigate to the Playwright homepage', async ({ page }) => {
     await page.goto('https://playwright.dev/');
     await expect(page).toHaveTitle(/Playwrightr/);
