@@ -10,6 +10,11 @@ lerna-debug.log*
 # files
 gukson.config.ts
 playwright.config.ts
+package-lock.json
+package.json
+
+
+dist/
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
