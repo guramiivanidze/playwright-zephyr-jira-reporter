@@ -32,7 +32,7 @@ A custom [Playwright](https://playwright.dev/) test reporter that integrates sea
 
 ### 🔁 Jira Issue Status Management
 
-- If a related Jira issue is already in "Testing", and the test is re-run:
+- If a related Jira issue is already in "Testing", and the test is Faild:
 The issue is moved to "In Progress".
 
 - If the test passes successfully:
