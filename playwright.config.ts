@@ -27,7 +27,7 @@ export default defineConfig({
   reporter: [
     ['./Reporter/ZephyrJiraReporter.ts', {
       Zephyr_Base_URL: 'https://api.zephyrscale.example.com/v2',
-      Zephyr_Access_Token: 'example-zephyr-access-token gurami',
+      Zephyr_Access_Token: 'example-zephyr-access-token',
       Zephyr_Test_Cycle_ID: 'DEMO-CYCLE',
       // Zephyr_Test_Plan_ID: 'Put your test plan ID here',
       Zephyr_Test_Project_Key: 'DEMO',
