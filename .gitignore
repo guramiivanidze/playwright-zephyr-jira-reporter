@@ -9,7 +9,7 @@ lerna-debug.log*
 
 # files
 gukson.config.ts
-playwright.config.ts
+# playwright.config.ts
 package-lock.json
 package.json
 

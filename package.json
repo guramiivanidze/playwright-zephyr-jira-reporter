@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "npx playwright test"
+    "test": "npx playwright test",
+    "test2": "npx playwright test --reporter=playwright-zephyr-jira-reporter"
   },
   "keywords": [
     "playwright",
