@@ -9,6 +9,7 @@ lerna-debug.log*
 
 # files
 gukson.config.ts
+playwright.config.ts
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)

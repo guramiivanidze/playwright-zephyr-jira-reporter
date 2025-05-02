@@ -211,8 +211,10 @@ class ZephyrJiraReporter implements Reporter {
                 reporter: { id: '6113c0ba9798100070110305' }
             }
         });
-
-        console.log(`✅ Jira issue created: ${issue.key}`);
+        await this.zephyrService?.linkIssueToTestCase(testCaseKey, {
+            issueId: issue.id
+        });
+        console.log(`✅ Jira issue created: ${issue.key} and linked to test case ${testCaseKey}`);
     };
 
     private getTransitionName(value: string): string | undefined {

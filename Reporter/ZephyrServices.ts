@@ -52,6 +52,11 @@ export interface TestExecutionResponse {
     updatedOn: string;
 }
 
+export interface TestCaseIssueLink {
+    issueId: string;
+}
+
+
 export class ZephyrServices {
     private client: AxiosInstance;
     private zephyrBaseUrl: string;
@@ -141,6 +146,20 @@ export class ZephyrServices {
             const axiosError = error as AxiosError;
             console.error(
                 `❌ Failed to update test execution ${params.testCaseKey}:`,
+                axiosError.message,
+                axiosError.response?.data
+            );
+            throw error;
+        }
+    }
+    
+    async linkIssueToTestCase(testCaseKey: string, link: TestCaseIssueLink): Promise<void> {
+        try {
+            const response = await this.client.post(`/testcases/${testCaseKey}/links/issues`, link);
+        } catch (error) {
+            const axiosError = error as AxiosError;
+            console.error(
+                `❌ Failed to link issue ${link.issueId} to test case ${testCaseKey}:`,
                 axiosError.message,
                 axiosError.response?.data
             );
