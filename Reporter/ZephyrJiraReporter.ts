@@ -14,7 +14,7 @@ interface MainReporterConfig {
     Jira_Access_Token: string,
     Jira_Email: string,
     Jira_project_Key: string,
-    Jira_Enabled: boolean,
+    Jira_Enabled: string,
 }
 
 class ZephyrJiraReporter implements Reporter {
@@ -32,48 +32,51 @@ class ZephyrJiraReporter implements Reporter {
 
     constructor(config: MainReporterConfig) {
         // Initialize configuration with environment variables as fallback
-        this.config = {
-            Zephyr_Base_URL: process.env.ZEPHYR_BASE_URL || config.Zephyr_Base_URL,
-            Zephyr_Access_Token: process.env.ZEPHYR_ACCESS_TOKEN || config.Zephyr_Access_Token,
-            Zephyr_Test_Cycle_ID: process.env.ZEPHYR_TEST_CYCLE_ID || config.Zephyr_Test_Cycle_ID,
-            // Zephyr_Test_Plan_ID: process.env.ZEPHYR_TEST_PLAN_ID || config.Zephyr_Test_Plan_ID,
-            Zephyr_Test_Project_Key: process.env.ZEPHYR_TEST_PROJECT_KEY || config.Zephyr_Test_Project_Key,
-            Zephyr_Enabled: process.env.ZEPHYR_ENABLED ? JSON.parse(process.env.ZEPHYR_ENABLED) : config.Zephyr_Enabled,
+        try {
+            this.config = {
+            Zephyr_Base_URL: config.Zephyr_Base_URL,
+            Zephyr_Access_Token: config.Zephyr_Access_Token,
+            Zephyr_Test_Cycle_ID: config.Zephyr_Test_Cycle_ID,
+            Zephyr_Test_Project_Key: config.Zephyr_Test_Project_Key,
+            Zephyr_Enabled: config.Zephyr_Enabled,
 
-            Jira_Access_Token: process.env.JIRA_ACCESS_TOKEN || config.Jira_Access_Token,
-            Jira_Base_URL: process.env.JIRA_BASE_URL || config.Jira_Base_URL,
-            Jira_Email: process.env.JIRA_EMAIL || config.Jira_Email,
-            Jira_project_Key: process.env.JIRA_PROJECT_KEY || config.Jira_project_Key,
-            Jira_Enabled: process.env.JIRA_ENABLED ? JSON.parse(process.env.JIRA_ENABLED) : config.Jira_Enabled,
+            Jira_Access_Token: config.Jira_Access_Token,
+            Jira_Base_URL: config.Jira_Base_URL,
+            Jira_Email: config.Jira_Email,
+            Jira_project_Key: config.Jira_project_Key,
+            Jira_Enabled: config.Jira_Enabled,
+            };
 
+            // Initialize the Zephyr Scale service if reporting is enabled
+            if (this.config.Zephyr_Enabled) {
+            this.zephyrService = new ZephyrServices({
+                Zephyr_Base_URL: this.config.Zephyr_Base_URL,
+                Zephyr_Access_Token: this.config.Zephyr_Access_Token,
+                Zephyr_Test_Cycle_ID: this.config.Zephyr_Test_Cycle_ID,
+                Zephyr_Test_Project_Key: this.config.Zephyr_Test_Project_Key,
+                Zephyr_Enabled: this.config.Zephyr_Enabled,
+            });
+            }
+
+            // Initialize the Jira service if reporting is enabled
+            if (this.config.Jira_Enabled) {
+            this.jiraService = new JiraServices({
+                Jira_Base_URL: this.config.Jira_Base_URL,
+                Jira_Access_Token: this.config.Jira_Access_Token,
+                Jira_Email: this.config.Jira_Email,
+                Jira_project_Key: this.config.Jira_project_Key,
+                Jira_Enabled: this.config.Jira_Enabled,
+            });
+            }
+        } catch (error) {
+            console.error('Error initializing ZephyrJiraReporter configuration or services:', error);
+            throw new Error('Failed to initialize ZephyrJiraReporter. Please check the provided configuration.');
         }
-
-        if (!this.config.Zephyr_Enabled || !this.config.Jira_Enabled) {
-            console.log('Zephyr Scale reporting is disabled');
-            return;
-        }
-        // Initialize the Zephyr Scale service if reporting is enabled
-        this.zephyrService = new ZephyrServices({
-            Zephyr_Base_URL: this.config.Zephyr_Base_URL,
-            Zephyr_Access_Token: this.config.Zephyr_Access_Token,
-            Zephyr_Test_Cycle_ID: this.config.Zephyr_Test_Cycle_ID,
-            // Zephyr_Test_Plan_ID: this.config.Zephyr_Test_Plan_ID,
-            Zephyr_Test_Project_Key: this.config.Zephyr_Test_Project_Key,
-            Zephyr_Enabled: this.config.Zephyr_Enabled,
-        });
-
-        this.jiraService = new JiraServices({
-            Jira_Base_URL: this.config.Jira_Base_URL,
-            Jira_Access_Token: this.config.Jira_Access_Token,
-            Jira_Email: this.config.Jira_Email,
-            Jira_project_Key: this.config.Jira_project_Key,
-            Jira_Enabled: this.config.Jira_Enabled,
-        });
     }
 
     onTestEnd(testCase: TestCase, testResult: TestResult): void {
 
-        if (!this.config.Zephyr_Enabled || !this.config.Jira_Enabled) return;
+        // if (!this.config.Zephyr_Enabled) return;
 
         const { testCaseKey, testCycleKey } = this.extractKeys(testCase.title);
         if (!testCaseKey) {
@@ -110,12 +113,14 @@ class ZephyrJiraReporter implements Reporter {
     }
 
     async onEnd(): Promise<void> {
-        if (!this.config.Zephyr_Enabled || !this.zephyrService || this.testResults.size === 0) return;
+        // console.log(this.config.Jira_Access_Token)
+        // if (!this.config.Zephyr_Enabled || !this.zephyrService || this.testResults.size === 0) return;
 
         console.log(`\nUpdating ${this.testResults.size} test results in Zephyr Scale...`);
+
         const updatePromises = Array.from(this.testResults.entries()).map(async ([testCaseKey, result]) => {
             try {
-                if (this.zephyrService) {
+                if (this.config.Zephyr_Enabled && this.zephyrService) {
                     await this.zephyrService.updateTestExecutionStatus({
                         projectKey: this.config.Zephyr_Test_Project_Key,
                         testCaseKey,
@@ -131,9 +136,11 @@ class ZephyrJiraReporter implements Reporter {
 
                     });
                 }
+
                 if (this.config.Jira_Enabled && this.jiraService) {
                     await this.handleJiraIssue(testCaseKey, result);
                 }
+
             } catch (error) {
                 if (error instanceof Error) {
                     console.log(`Failed to update test case ${testCaseKey} in Zephyr Scale:`, error.message);
@@ -144,9 +151,8 @@ class ZephyrJiraReporter implements Reporter {
         });
 
         await Promise.all(updatePromises);
-        console.log('Zephyr Scale update completed');
+        console.log('Zephyr Scale update and Jira migration completed');
     }
-
 
     private async handleJiraIssue(testCaseKey: string, result: any) {
         if (!this.jiraService) return;
@@ -154,7 +160,6 @@ class ZephyrJiraReporter implements Reporter {
         try {
             const searchResult = await this.jiraService.searchIssueWithTitleUsingJQL(`${testCaseKey}`);
             const existingIssues = searchResult.sections[0]?.issues || [];
-
 
             if (existingIssues.length === 1) {
                 const issue = existingIssues[0];
@@ -173,7 +178,12 @@ class ZephyrJiraReporter implements Reporter {
                 const transition = transitionMap[status];
 
                 if (currentStatus === "Done" || !transition) {
-                    console.log(`🔄 No transition needed for "${currentStatus}"`);
+                    if (result.status === TestExecutionStatus.failed) {
+                        await this.createNewJiraIssue(testCaseKey, result);
+                        console.log(`❌ Test case ${testCaseKey} failed, Jira issue is already in "Done" status. Creating a new issue. check it manually on duplication.`);
+                    }
+
+                    console.log(`🔄 ⚠️ No transition needed for "${currentStatus}"`);
                 } else {
                     await this.jiraService.transitionIssue(issue.key, transition);
                     console.log(`✅ Transitioned ${issue.key} to ${this.getTransitionName(transition)}`);
@@ -211,9 +221,11 @@ class ZephyrJiraReporter implements Reporter {
                 reporter: { id: '6113c0ba9798100070110305' }
             }
         });
-        await this.zephyrService?.linkIssueToTestCase(testCaseKey, {
-            issueId: issue.id
-        });
+        if (this.config.Zephyr_Enabled && this.zephyrService) {
+            await this.zephyrService?.linkIssueToTestCase(testCaseKey, {
+                issueId: issue.id
+            });
+        }
         console.log(`✅ Jira issue created: ${issue.key} and linked to test case ${testCaseKey}`);
     };
 

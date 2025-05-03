@@ -75,7 +75,7 @@ export interface JiraConfig {
     Jira_Access_Token: string;
     Jira_Email: string;
     Jira_project_Key: string;
-    Jira_Enabled: boolean;
+    Jira_Enabled: string;
 
 }
 
@@ -124,8 +124,7 @@ export interface JiraIssueSearchResponse {
 
 export class JiraServices {
     private client: AxiosInstance;
-    private jiraBaseUrl: string;
-    jiraProjectKey: string;
+
 
     constructor(config: JiraConfig) {
         const requiredFields: { key: keyof JiraConfig; message: string }[] = [
@@ -142,13 +141,11 @@ export class JiraServices {
                 throw new Error(field.message);
             }
         }
-
+    
         const authToken = Buffer.from(`${config.Jira_Email}:${config.Jira_Access_Token}`).toString('base64');
-        this.jiraBaseUrl = config.Jira_Base_URL;
-        this.jiraProjectKey = config.Jira_project_Key;
 
         this.client = axios.create({
-            baseURL: `${this.jiraBaseUrl}/rest/api/3`,
+            baseURL: `${config.Jira_Base_URL}/rest/api/3`,
             headers: {
                 Authorization: `Basic ${authToken}`,
                 Accept: 'application/json',
@@ -170,7 +167,7 @@ export class JiraServices {
                 axiosError.message,
                 axiosError.response?.data
             );
-            throw error;
+            throw axiosError.response?.data;
         }
     }
 

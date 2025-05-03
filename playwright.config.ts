@@ -4,9 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -26,19 +26,17 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['./Reporter/ZephyrJiraReporter.ts', {
-      Zephyr_Base_URL: 'https://api.zephyrscale.example.com/v2',
-      Zephyr_Access_Token: 'example-zephyr-access-token',
-      Zephyr_Test_Cycle_ID: 'DEMO-CYCLE',
-      // Zephyr_Test_Plan_ID: 'Put your test plan ID here',
-      Zephyr_Test_Project_Key: 'DEMO',
-      Zephyr_Enabled: false,
+      Zephyr_Base_URL: process.env.ZEPHYR_BASE_URL || 'https://api.zephyrscale.example.com/v2',
+      Zephyr_Access_Token: process.env.ZEPHYR_ACCESS_TOKEN || 'example-zephyr-access-token',
+      Zephyr_Test_Cycle_ID: process.env.ZEPHYR_TEST_CYCLE_ID || 'DEMO-CYCLE',
+      Zephyr_Test_Project_Key: process.env.ZEPHYR_TEST_PROJECT_KEY || 'DEMO',
+      Zephyr_Enabled: process.env.ZEPHYR_ENABLED === 'true',
 
-      Jira_Base_URL: 'https://example.atlassian.net',
-      Jira_Access_Token: 'example-jira-access-token',
-      // Jira_Organization_Id : 'example-organization-id',
-      Jira_Email: 'example@example.com',
-      Jira_project_Key: 'DEMO',
-      Jira_Enabled: true,
+      Jira_Base_URL: process.env.JIRA_BASE_URL || 'https://example.atlassian.net',
+      Jira_Access_Token: process.env.JIRA_ACCESS_TOKEN || 'example-jira-access-token',
+      Jira_Email: process.env.JIRA_EMAIL || 'example@example.com',
+      Jira_project_Key: process.env.JIRA_PROJECT_KEY || 'DEMO',
+      Jira_Enabled: process.env.JIRA_ENABLED === 'true',
     }],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

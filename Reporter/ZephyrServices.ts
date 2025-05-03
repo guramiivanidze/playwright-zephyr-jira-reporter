@@ -59,12 +59,6 @@ export interface TestCaseIssueLink {
 
 export class ZephyrServices {
     private client: AxiosInstance;
-    private zephyrBaseUrl: string;
-    private zephyrAccessToken: string;
-    private zephyrTestCycleId: string;
-    private zephyrEnabled: boolean;
-    private ZephyrTestProjectKey: string;
-
 
     constructor(config: {
         Zephyr_Base_URL: string,
@@ -72,7 +66,6 @@ export class ZephyrServices {
         Zephyr_Test_Cycle_ID: string,
         Zephyr_Enabled: boolean,
         Zephyr_Test_Project_Key: string,
-
     }) {
 
         const requiredFields: { key: keyof typeof config; message: string }[] = [
@@ -88,16 +81,10 @@ export class ZephyrServices {
             }
         }
 
-
-        this.zephyrBaseUrl = config.Zephyr_Base_URL;
-        this.zephyrAccessToken = config.Zephyr_Access_Token;
-        this.zephyrTestCycleId = config.Zephyr_Test_Cycle_ID;
-        this.zephyrEnabled = config.Zephyr_Enabled;
-        this.ZephyrTestProjectKey = config.Zephyr_Test_Project_Key;
         this.client = axios.create({
-            baseURL: this.zephyrBaseUrl,
+            baseURL: config.Zephyr_Base_URL,
             headers: {
-                Authorization: `Bearer ${this.zephyrAccessToken}`,
+                Authorization: `Bearer ${config.Zephyr_Access_Token}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -152,7 +139,7 @@ export class ZephyrServices {
             throw error;
         }
     }
-    
+
     async linkIssueToTestCase(testCaseKey: string, link: TestCaseIssueLink): Promise<void> {
         try {
             const response = await this.client.post(`/testcases/${testCaseKey}/links/issues`, link);
