@@ -31,7 +31,7 @@ export default defineConfig({
       Zephyr_Test_Cycle_ID: 'DEMO-CYCLE',
       // Zephyr_Test_Plan_ID: 'Put your test plan ID here',
       Zephyr_Test_Project_Key: 'DEMO',
-      Zephyr_Enabled: true,
+      Zephyr_Enabled: false,
 
       Jira_Base_URL: 'https://example.atlassian.net',
       Jira_Access_Token: 'example-jira-access-token',
